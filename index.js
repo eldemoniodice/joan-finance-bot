@@ -43,7 +43,7 @@ const MIS_CATEGORIAS = [
 async function detectarCategoriaIA(descripcion) {
   try {
     // CAMBIO: Usamos la etiqueta -latest para evitar el error 404
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
     
     const prompt = `
       Actúa como un categorizador financiero experto. Tu única tarea es asignar una categoría al siguiente gasto: "${descripcion}".
