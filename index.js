@@ -16,8 +16,10 @@ const bot = new TelegramBot(process.env.BOT_TOKEN, {
 // GOOGLE AUTH
 // ============================
 
+const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
+
 const auth = new google.auth.GoogleAuth({
-  keyFile: 'joan-finance-612339531942.json', // <-- CAMBIA ESTO por el nombre REAL de tu JSON
+  credentials,
   scopes: ['https://www.googleapis.com/auth/spreadsheets']
 });
 
