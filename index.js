@@ -54,7 +54,7 @@ async function registrarGasto(texto) {
 
     spreadsheetId,
 
-    range: 'Form_Responses1!A:E',
+    range:  "'Respuestas de formulario 1'!A:E",
 
     valueInputOption: 'USER_ENTERED',
 
