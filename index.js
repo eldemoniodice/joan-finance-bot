@@ -1,4 +1,3 @@
-process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
 require('dotenv').config();
 
 const TelegramBot = require('node-telegram-bot-api');
@@ -11,6 +10,9 @@ const { google } = require('googleapis');
 const bot = new TelegramBot(process.env.BOT_TOKEN, {
   polling: true
 });
+
+// limpia webhooks viejos
+bot.deleteWebHook();
 
 // ============================
 // GOOGLE AUTH
@@ -26,6 +28,42 @@ const auth = new google.auth.GoogleAuth({
 const spreadsheetId = process.env.SPREADSHEET_ID;
 
 // ============================
+// FUNCION DETECTAR CATEGORIA
+// ============================
+
+function detectarCategoria(descripcion) {
+
+  const texto = descripcion.toLowerCase();
+
+  if (
+    texto.includes('pollo') ||
+    texto.includes('almuerzo') ||
+    texto.includes('comida') ||
+    texto.includes('cena') ||
+    texto.includes('desayuno')
+  ) {
+    return 'Comida';
+  }
+
+  if (
+    texto.includes('uber') ||
+    texto.includes('taxi') ||
+    texto.includes('bus')
+  ) {
+    return 'Transporte';
+  }
+
+  if (
+    texto.includes('netflix') ||
+    texto.includes('spotify')
+  ) {
+    return 'Entretenimiento';
+  }
+
+  return 'General';
+}
+
+// ============================
 // FUNCION REGISTRAR GASTO
 // ============================
 
@@ -36,25 +74,29 @@ async function registrarGasto(texto) {
     auth
   });
 
-  // Ejemplo esperado:
+  // ignorar comandos
+  if (texto.startsWith('/')) {
+    return;
+  }
+
+  // ejemplo:
   // pollo 25
 
   const partes = texto.split(' ');
 
-  // último valor = monto
   const monto = partes.pop();
 
-  // resto = descripción
   const descripcion = partes.join(' ');
 
-  const fecha = new Date().toLocaleDateString();
+  const categoria = detectarCategoria(descripcion);
 
-  // agregar fila al sheet
+  const fecha = new Date();
+
   await sheets.spreadsheets.values.append({
 
     spreadsheetId,
 
-    range:  "'Respuestas de formulario 1'!A:E",
+    range: "'Respuestas de formulario 1'!A:E",
 
     valueInputOption: 'USER_ENTERED',
 
@@ -62,11 +104,11 @@ async function registrarGasto(texto) {
 
       values: [[
 
-        new Date().toLocaleString(), // Marca temporal
-        fecha,                       // Día
-        descripcion,                 // Concepto
-        'General',                   // Categoría
-        monto                        // Monto
+        fecha.toLocaleString(),
+        fecha.toLocaleDateString(),
+        descripcion,
+        categoria,
+        monto
 
       ]]
     }
@@ -82,13 +124,24 @@ bot.on('message', async (msg) => {
 
   const texto = msg.text;
 
+  // ignorar comandos
+  if (texto.startsWith('/')) {
+
+    bot.sendMessage(
+      msg.chat.id,
+      '👋 Envíame un gasto así:\n\npollo 25'
+    );
+
+    return;
+  }
+
   try {
 
     await registrarGasto(texto);
 
     bot.sendMessage(
       msg.chat.id,
-      `✅ Gasto registrado:\n\n💸 ${texto}`
+      `✅ Gasto registrado\n\n💸 ${texto}`
     );
 
   } catch (error) {
