@@ -3,6 +3,7 @@ require('dotenv').config();
 const TelegramBot = require('node-telegram-bot-api');
 const { google } = require('googleapis');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const http = require('http'); // <-- NUEVO: Para el servidor fantasma
 
 // ============================
 // CONFIGURACIÓN INICIAL
@@ -24,7 +25,6 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 // FUNCION DETECTAR CATEGORIA CON IA
 // ============================
 
-// Se agregó "Suscripciones" a la lista oficial
 const MIS_CATEGORIAS = [
   'Alimentación Prim', 
   'Alimentación Secu', 
@@ -42,9 +42,9 @@ const MIS_CATEGORIAS = [
 
 async function detectarCategoriaIA(descripcion) {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    // CAMBIO: Usamos la etiqueta -latest para evitar el error 404
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
     
-    // Diccionario estricto basado en tus definiciones exactas
     const prompt = `
       Actúa como un categorizador financiero experto. Tu única tarea es asignar una categoría al siguiente gasto: "${descripcion}".
       
@@ -52,32 +52,39 @@ async function detectarCategoriaIA(descripcion) {
       1. Responde EXCLUSIVAMENTE con UNA de estas categorías: ${MIS_CATEGORIAS.join(', ')}.
       2. Cero formato: no uses comillas, ni puntos, ni saltos de línea.
       3. Utiliza estrictamente este diccionario para clasificar:
-         - "Alimentación Prim": Incluye verduras, frutas, lácteos, todo lo natural o mercado.
-         - "Alimentación Secu": Incluye cena en restaurantes, golosinas, gaseosas, galletas, snacks, fideos, todo lo que no es natural ni saludable.
-         - "Alquiler/Vivienda": Incluye compras para el hogar como electrodomésticos, accesorios de limpieza, bolsas.
-         - "Gym & Deporte": Incluye todo lo relacionado a deporte como pichanga, creatina, proteína, partidos de futbol.
-         - "Higiene Personal": Incluye desodorante, pasta dental, cremas, cepillos de dientes.
-         - "Mascotas": Incluye todo lo relacionado con Gaia (perrita) y Salem (gatito).
-         - "Ocio": Incluye cine, teatro, pasajes de bus fuera de Lima, pasajes de avión.
-         - "Otros": Incluye regalos, regalos para mi novia Camila (flores, peluches), impresión de fotos, juegos de mesa, alquileres.
-         - "Ropa": Ropa, zapatillas, indumentaria.
-         - "Salud": Incluye pastillas, consultas médicas, farmacia.
-         - "Suscripciones": Incluye Netflix, Canva, Muzzonly, Prime.
-         - "Transporte": Incluye Taxis, Micros, Metropolitano y Tren.
+         - "Alimentación Prim": verduras, frutas, lácteos, natural, mercado, despensa.
+         - "Alimentación Secu": cena en restaurantes, chifa, golosinas, gaseosas, snacks, pedidos, no saludable.
+         - "Alquiler/Vivienda": compras hogar, electrodomésticos, limpieza, bolsas.
+         - "Gym & Deporte": deporte, pichanga, creatina, proteína, futbol.
+         - "Higiene Personal": desodorante, pasta dental, cremas, cepillos.
+         - "Mascotas": Gaia, Salem, veterinaria, comida perro/gato.
+         - "Ocio": cine, teatro, pasajes fuera de Lima, vuelos, diversión.
+         - "Otros": regalos para Camila, flores, peluches, fotos, juegos, alquileres.
+         - "Ropa": zapatillas, prendas, indumentaria.
+         - "Salud": pastillas, farmacia, clínica, medico.
+         - "Suscripciones": Netflix, Canva, Muzzonly, Prime.
+         - "Transporte": Taxis, Uber, Micros, Metropolitano, Tren.
       4. Si el gasto no encaja en ninguna, responde obligatoriamente "Otros".
     `;
 
     const result = await model.generateContent(prompt);
     const respuesta = result.response.text().trim();
+    
+    console.log(`🤖 Texto: "${descripcion}" | IA Respondió: "${respuesta}"`);
 
-    if (MIS_CATEGORIAS.includes(respuesta)) {
-      return respuesta;
+    const categoriaEncontrada = MIS_CATEGORIAS.find(cat => 
+      respuesta.toLowerCase().includes(cat.toLowerCase())
+    );
+
+    if (categoriaEncontrada) {
+      return categoriaEncontrada;
     } else {
+      console.log(`⚠️ No hizo match exacto. Asignando 'Otros'.`);
       return 'Otros';
     }
 
   } catch (error) {
-    console.error('Error usando Gemini:', error);
+    console.error('❌ Error CRÍTICO usando Gemini:', error);
     return 'Otros';
   }
 }
@@ -126,7 +133,6 @@ async function registrarGasto(texto) {
     }
   });
 
-  // Ahora retornamos un objeto con todos los datos para armar el resumen en Telegram
   return {
     fechaHora: fechaHoraStr,
     fechaDia: fechaDiaStr,
@@ -151,19 +157,15 @@ bot.on('message', async (msg) => {
   }
 
   try {
-    // Recibimos el objeto con la fila completa
     const datos = await registrarGasto(texto);
 
-    // Armamos el resumen exacto de lo que se mandó a Sheets
     const mensajeResumen = `
 ✅ *Guardado en Google Sheets*
 
-📊 *Resumen de la fila insertada:*
-• *Col A (Fecha/Hora):* ${datos.fechaHora}
-• *Col B (Fecha):* ${datos.fechaDia}
-• *Col C (Detalle):* ${datos.descripcion}
-• *Col D (Categoría):* ${datos.categoria}
-• *Col E (Monto):* S/ ${datos.monto}
+📊 *Resumen:*
+• *Detalle:* ${datos.descripcion}
+• *Categoría:* ${datos.categoria}
+• *Monto:* S/ ${datos.monto}
     `.trim();
 
     bot.sendMessage(msg.chat.id, mensajeResumen, { parse_mode: 'Markdown' });
@@ -176,6 +178,18 @@ bot.on('message', async (msg) => {
       bot.sendMessage(msg.chat.id, '❌ Error interno registrando el gasto.');
     }
   }
+});
+
+// ============================
+// SERVIDOR FANTASMA (PARA RENDER)
+// ============================
+const port = process.env.PORT || 3000;
+http.createServer((req, res) => {
+  res.writeHead(200, { 'Content-Type': 'text/plain' });
+  res.write('Bot de Gastos Activo 🚀');
+  res.end();
+}).listen(port, () => {
+  console.log(`🌐 Servidor fantasma escuchando en puerto ${port} (Render feliz)`);
 });
 
 console.log('🔥 Bot con IA activo...');
