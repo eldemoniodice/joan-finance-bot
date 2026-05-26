@@ -53,7 +53,7 @@ async function detectarCategoriaIA(descripcion) {
       2. Cero formato: no uses comillas, ni puntos, ni saltos de línea.
       3. Utiliza estrictamente este diccionario para clasificar:
          - "Alimentación Prim": verduras, frutas, lácteos, natural, mercado, despensa.
-         - "Alimentación Secu": cena en restaurantes, chifa, golosinas, gaseosas, snacks, pedidos, no saludable.
+         - "Alimentación Secu": cena en restaurantes, chifa, golosinas, gaseosas, snacks, pedidos, no saludable, panes con queso, panes con palta, etc.
          - "Alquiler/Vivienda": compras hogar, electrodomésticos, limpieza, bolsas.
          - "Gym & Deporte": deporte, pichanga, creatina, proteína, futbol.
          - "Higiene Personal": desodorante, pasta dental, cremas, cepillos.
