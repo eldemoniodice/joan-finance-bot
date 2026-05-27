@@ -53,17 +53,17 @@ async function detectarCategoriaIA(descripcion) {
       2. Cero formato: no uses comillas, ni puntos, ni saltos de línea.
       3. Utiliza estrictamente este diccionario para clasificar:
          - "Alimentación Prim": verduras, frutas, lácteos, natural, mercado, despensa.
-         - "Alimentación Secu": cena en restaurantes, chifa, golosinas, gaseosas, snacks, pedidos, no saludable, panes con queso, panes con palta, etc.
+         - "Alimentación Secu": cena en restaurantes, cenas de aniversarios, chifa, golosinas, gaseosas, snacks, pedidos, no saludable, panes con queso, panes con palta, etc.
          - "Alquiler/Vivienda": compras hogar, electrodomésticos, limpieza, bolsas.
          - "Gym & Deporte": deporte, pichanga, creatina, proteína, futbol.
          - "Higiene Personal": desodorante, pasta dental, cremas, cepillos.
          - "Mascotas": Gaia, Salem, veterinaria, comida perro/gato.
-         - "Ocio": cine, teatro, pasajes fuera de Lima, vuelos, diversión.
+         - "Ocio": cine, teatro, pasajes fuera de Lima, vuelos, diversión, pasajes de avion.
          - "Otros": regalos para Camila, flores, peluches, fotos, juegos, alquileres.
          - "Ropa": zapatillas, prendas, indumentaria.
-         - "Salud": pastillas, farmacia, clínica, medico.
-         - "Suscripciones": Netflix, Canva, Muzzonly, Prime.
-         - "Transporte": Taxis, Uber, Micros, Metropolitano, Tren.
+         - "Salud": pastillas, farmacia, clínica, medico, consultas medicas.
+         - "Suscripciones": Netflix, Canva, Muzzonly, Prime, Disney.
+         - "Transporte": Taxis, Uber, Micros, Metropolitano, Tren, pago de parqueos, pago de estacionamientos.
       4. Si el gasto no encaja en ninguna, responde obligatoriamente "Otros".
     `;
 
